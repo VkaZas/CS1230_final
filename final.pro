@@ -38,7 +38,8 @@ SOURCES += ui/mainwindow.cpp \
     gl/textures/TextureParameters.cpp \
     gl/textures/TextureParametersBuilder.cpp \
     gl/GLDebug.cpp \
-    utils/resourceloader.cpp
+    utils/resourceloader.cpp \
+    openglshape.cpp
 
 
 HEADERS += ui/mainwindow.h \
@@ -59,7 +60,8 @@ HEADERS += ui/mainwindow.h \
     gl/textures/TextureParameters.h \
     gl/textures/TextureParametersBuilder.h \
     gl/GLDebug.h \
-    utils/resourceloader.h
+    utils/resourceloader.h \
+    openglshape.h
 
 
 FORMS += ui/mainwindow.ui
@@ -101,4 +103,6 @@ DISTFILES += \
     shaders/normals/normalsArrow.frag \
     shaders/normals/normalsArrow.vert \
     gl/shaders/shader.frag \
-    gl/shaders/shader.vert
+    gl/shaders/shader.vert \
+    shaders/helix.vert \
+    shaders/helix.frag

@@ -1,6 +1,8 @@
 #include "view.h"
-
 #include "viewformat.h"
+#include "utils/resourceloader.h"
+#include "gl/shaders/ShaderAttribLocations.h"
+
 #include <QApplication>
 #include <QKeyEvent>
 #include <iostream>
@@ -33,31 +35,43 @@ void View::initializeGL()
     // method. Before this method is called, there is no active OpenGL
     // context and all OpenGL calls have no effect.
 
-    //initialize glew
-    glewExperimental = GL_TRUE;
-    GLenum err = glewInit();
-    if ( GLEW_OK != err ) {
-        /* Problem: glewInit failed, something is seriously wrong. */
-        std::cerr << "Something is very wrong, glew initialization failed." << std::endl;
-    }
-    std::cout << "Using GLEW " <<  glewGetString( GLEW_VERSION ) << std::endl;
+    // Initialize glew
+    ResourceLoader::initializeGlew();
+
+    // Create helix shader program
+    m_helixProgramID = ResourceLoader::createShaderProgram(":/shaders/helix.vert", ":/shaders/helix.frag");
+    glUseProgram(m_helixProgramID);
+
+    // Draw a squad for screen space
+    m_screenSquad = make_unique<OpenGLShape>();
+    vector<GLfloat> screenSquadVerts{
+       -0.5f, 0.5f, 0.0f,
+       -0.5f, -0.5f, 0.0f,
+       0.5f, 0.5f, 0.0f,
+       0.5f, -0.5f, 0.0f
+    };
+    m_screenSquad->setVertexData(screenSquadVerts.data(), screenSquadVerts.size(), VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLE_STRIP, 4);
+    m_screenSquad->setAttribute(CS123::GL::ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
+    m_screenSquad->buildVAO();
 
     // Start a timer that will try to get 60 frames per second (the actual
     // frame rate depends on the operating system and other running programs)
     m_time.start();
     m_timer.start(1000 / 60);
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
+//    glEnable(GL_DEPTH_TEST);
+//    glEnable(GL_CULL_FACE);
+//    glCullFace(GL_BACK);
+//    glFrontFace(GL_CCW);
 }
 
 void View::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+//    cout << "paintGL" << endl;
     // TODO: Implement the demo rendering here
+    m_screenSquad->draw();
 }
 
 void View::resizeGL(int w, int h)

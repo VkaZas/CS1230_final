@@ -2,9 +2,14 @@
 #define VIEW_H
 
 #include "GL/glew.h"
+#include "GL/glu.h"
+#include "openglshape.h"
 #include <qgl.h>
 #include <QTime>
 #include <QTimer>
+#include <memory>
+
+using namespace std;
 
 class View : public QGLWidget
 {
@@ -18,6 +23,9 @@ private:
     QTime m_time;
     QTimer m_timer;
     bool m_captureMouse;
+
+    GLuint m_helixProgramID;
+    unique_ptr<OpenGLShape> m_screenSquad;
 
     void initializeGL();
     void paintGL();
