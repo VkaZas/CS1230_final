@@ -37,7 +37,8 @@ SOURCES += ui/mainwindow.cpp \
     gl/textures/Texture2D.cpp \
     gl/textures/TextureParameters.cpp \
     gl/textures/TextureParametersBuilder.cpp \
-    gl/GLDebug.cpp
+    gl/GLDebug.cpp \
+    utils/resourceloader.cpp
 
 
 HEADERS += ui/mainwindow.h \
@@ -57,7 +58,8 @@ HEADERS += ui/mainwindow.h \
     gl/textures/Texture2D.h \
     gl/textures/TextureParameters.h \
     gl/textures/TextureParametersBuilder.h \
-    gl/GLDebug.h
+    gl/GLDebug.h \
+    utils/resourceloader.h
 
 
 FORMS += ui/mainwindow.ui
