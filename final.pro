@@ -102,7 +102,5 @@ DISTFILES += \
     shaders/normals/normalsArrow.gsh \
     shaders/normals/normalsArrow.frag \
     shaders/normals/normalsArrow.vert \
-    gl/shaders/shader.frag \
-    gl/shaders/shader.vert \
     shaders/helix.vert \
     shaders/helix.frag

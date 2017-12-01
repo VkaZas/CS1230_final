@@ -2,13 +2,14 @@
 #include "viewformat.h"
 #include "utils/resourceloader.h"
 #include "gl/shaders/ShaderAttribLocations.h"
+#include "glm.hpp"
 
 #include <QApplication>
 #include <QKeyEvent>
 #include <iostream>
 
 View::View(QWidget *parent) : QGLWidget(ViewFormat(), parent),
-    m_time(), m_timer(), m_captureMouse(false)
+    m_time(), m_timer(), m_captureMouse(false), m_increment(0), m_fps(60.0)
 {
     // View needs all mouse move events, not just mouse drag events
     setMouseTracking(true);
@@ -39,19 +40,20 @@ void View::initializeGL()
     ResourceLoader::initializeGlew();
 
     // Create helix shader program
-    m_helixProgramID = ResourceLoader::createShaderProgram(":/shaders/helix.vert", ":/shaders/helix.frag");
+    m_helixProgramID = ResourceLoader::createShaderProgram(":/shaders/shaders/helix.vert", ":/shaders/shaders/helix.frag");
     glUseProgram(m_helixProgramID);
 
     // Draw a squad for screen space
     m_screenSquad = make_unique<OpenGLShape>();
     vector<GLfloat> screenSquadVerts{
-       -0.5f, 0.5f, 0.0f,
-       -0.5f, -0.5f, 0.0f,
-       0.5f, 0.5f, 0.0f,
-       0.5f, -0.5f, 0.0f
+       -1.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+       -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+       1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+       1.0f, -1.0f, 0.0f, 1.0f, 1.0f
     };
     m_screenSquad->setVertexData(screenSquadVerts.data(), screenSquadVerts.size(), VBO::GEOMETRY_LAYOUT::LAYOUT_TRIANGLE_STRIP, 4);
     m_screenSquad->setAttribute(CS123::GL::ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
+    m_screenSquad->setAttribute(CS123::GL::ShaderAttrib::TEXCOORD0, 2, 3 * sizeof(VBOAttribMarker::DATA_TYPE::FLOAT), VBOAttribMarker::DATA_TYPE::FLOAT, false);
     m_screenSquad->buildVAO();
 
     // Start a timer that will try to get 60 frames per second (the actual
@@ -69,6 +71,10 @@ void View::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    float time = m_increment++ / m_fps;
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iTime"), time);
+    glUniform3f(glGetUniformLocation(m_helixProgramID, "iResolution"), m_width * 1.0f, m_height * 1.0f, 1.0f);
+
 //    cout << "paintGL" << endl;
     // TODO: Implement the demo rendering here
     m_screenSquad->draw();
@@ -77,8 +83,9 @@ void View::paintGL()
 void View::resizeGL(int w, int h)
 {
     float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
-    w = static_cast<int>(w / ratio);
-    h = static_cast<int>(h / ratio);
+    m_width = w = static_cast<int>(w / ratio);
+    m_height = h = static_cast<int>(h / ratio);
+    glUniform3i(glGetUniformLocation(m_helixProgramID, "iResolution"), m_width, m_height, 0);
     glViewport(0, 0, w, h);
 }
 

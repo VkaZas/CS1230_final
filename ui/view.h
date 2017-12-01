@@ -27,6 +27,9 @@ private:
     GLuint m_helixProgramID;
     unique_ptr<OpenGLShape> m_screenSquad;
 
+    int m_width, m_height, m_increment;
+    float m_fps;
+
     void initializeGL();
     void paintGL();
     void resizeGL(int w, int h);
