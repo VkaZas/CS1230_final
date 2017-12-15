@@ -24,7 +24,7 @@ private:
     QTimer m_timer;
     bool m_captureMouse;
 
-    GLuint m_helixProgramID;
+    GLuint m_helixProgramID, m_noiseTexID;
     unique_ptr<OpenGLShape> m_screenSquad;
 
     int m_width, m_height, m_increment;
