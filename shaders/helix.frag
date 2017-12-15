@@ -35,9 +35,14 @@ float hash21(vec2 p) {
 }
 
 float hash31(vec3 p) {
-    p = 50.0*fract( p*0.3183099 + vec3(0.71,0.113,0.419));
-    return -1.0+2.0*fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
+    float h = dot(p,vec3(127.1,311.7, 555.5));
+    return fract(sin(h)*43758.5453123) * 2.0 - 1.0;
 }
+
+//float hash31(vec3 p) {
+//    p = 50.0* p*0.3183099 + vec3(0.71,0.113,0.419);
+//    return -1.0+2.0*fract( p.x*p.z*(p.x+p.z) );
+//}
 
 float valueNoise(vec2 p) {
     vec2 pi = floor(p);
@@ -124,7 +129,7 @@ float fbmSealevel(vec3 p, int level) {
         freq *= 2.01;
         amp *= -0.49;
     }
-    return sin(sum * 10.);
+    return sin(sum * 20.);
 }
 
 
@@ -364,7 +369,7 @@ vec3 generateSeaColor(vec3 ro, vec3 rd, vec3 norm, vec3 lig) {
 
     // Refraction
     vec3 refrD = refract(rd, vec3(0., 1., 0.), .8);
-    res = raymarchUnderSea(ro, refrD, 20., .8);
+    res = raymarchUnderSea(ro, refrD, 30., .8);
     vec3 refrPos = ro + res.dist * refrD;
     if (res.primitive == TERRAIN) {
         refrCol = generateTerrainColor(refrPos, calcNormal(refrPos, TERRAIN), lig);
