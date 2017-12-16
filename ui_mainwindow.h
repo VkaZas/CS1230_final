@@ -36,11 +36,15 @@ public:
     QLabel *label;
     QWidget *verticalLayoutWidget;
     QVBoxLayout *verticalLayout;
-    QCheckBox *checkBox;
-    QCheckBox *checkBox_2;
-    QCheckBox *checkBox_3;
-    QCheckBox *checkBox_4;
-    QCheckBox *checkBox_5;
+    QCheckBox *seaReflectionBox;
+    QCheckBox *seaRefractionBox;
+    QCheckBox *seaShadowBox;
+    QCheckBox *rainBox;
+    QCheckBox *fogBox;
+    QCheckBox *snowBox;
+    QCheckBox *aaBox;
+    QCheckBox *ladderBox;
+    QCheckBox *lightBox;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -79,30 +83,50 @@ public:
         verticalLayout->setContentsMargins(11, 11, 11, 11);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
-        checkBox = new QCheckBox(verticalLayoutWidget);
-        checkBox->setObjectName(QStringLiteral("checkBox"));
+        seaReflectionBox = new QCheckBox(verticalLayoutWidget);
+        seaReflectionBox->setObjectName(QStringLiteral("seaReflectionBox"));
 
-        verticalLayout->addWidget(checkBox);
+        verticalLayout->addWidget(seaReflectionBox);
 
-        checkBox_2 = new QCheckBox(verticalLayoutWidget);
-        checkBox_2->setObjectName(QStringLiteral("checkBox_2"));
+        seaRefractionBox = new QCheckBox(verticalLayoutWidget);
+        seaRefractionBox->setObjectName(QStringLiteral("seaRefractionBox"));
 
-        verticalLayout->addWidget(checkBox_2);
+        verticalLayout->addWidget(seaRefractionBox);
 
-        checkBox_3 = new QCheckBox(verticalLayoutWidget);
-        checkBox_3->setObjectName(QStringLiteral("checkBox_3"));
+        seaShadowBox = new QCheckBox(verticalLayoutWidget);
+        seaShadowBox->setObjectName(QStringLiteral("seaShadowBox"));
 
-        verticalLayout->addWidget(checkBox_3);
+        verticalLayout->addWidget(seaShadowBox);
 
-        checkBox_4 = new QCheckBox(verticalLayoutWidget);
-        checkBox_4->setObjectName(QStringLiteral("checkBox_4"));
+        rainBox = new QCheckBox(verticalLayoutWidget);
+        rainBox->setObjectName(QStringLiteral("rainBox"));
 
-        verticalLayout->addWidget(checkBox_4);
+        verticalLayout->addWidget(rainBox);
 
-        checkBox_5 = new QCheckBox(verticalLayoutWidget);
-        checkBox_5->setObjectName(QStringLiteral("checkBox_5"));
+        fogBox = new QCheckBox(verticalLayoutWidget);
+        fogBox->setObjectName(QStringLiteral("fogBox"));
 
-        verticalLayout->addWidget(checkBox_5);
+        verticalLayout->addWidget(fogBox);
+
+        snowBox = new QCheckBox(verticalLayoutWidget);
+        snowBox->setObjectName(QStringLiteral("snowBox"));
+
+        verticalLayout->addWidget(snowBox);
+
+        aaBox = new QCheckBox(verticalLayoutWidget);
+        aaBox->setObjectName(QStringLiteral("aaBox"));
+
+        verticalLayout->addWidget(aaBox);
+
+        ladderBox = new QCheckBox(verticalLayoutWidget);
+        ladderBox->setObjectName(QStringLiteral("ladderBox"));
+
+        verticalLayout->addWidget(ladderBox);
+
+        lightBox = new QCheckBox(verticalLayoutWidget);
+        lightBox->setObjectName(QStringLiteral("lightBox"));
+
+        verticalLayout->addWidget(lightBox);
 
         settingsDock->setWidget(settingsDockContent);
         MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(1), settingsDock);
@@ -116,11 +140,15 @@ public:
     {
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "A CS123 Final", 0));
         label->setText(QApplication::translate("MainWindow", "Settings", 0));
-        checkBox->setText(QApplication::translate("MainWindow", "CheckBox0", 0));
-        checkBox_2->setText(QApplication::translate("MainWindow", "CheckBox1", 0));
-        checkBox_3->setText(QApplication::translate("MainWindow", "CheckBox2", 0));
-        checkBox_4->setText(QApplication::translate("MainWindow", "CheckBox3", 0));
-        checkBox_5->setText(QApplication::translate("MainWindow", "CheckBox4", 0));
+        seaReflectionBox->setText(QApplication::translate("MainWindow", "Sea Reflection", 0));
+        seaRefractionBox->setText(QApplication::translate("MainWindow", "Sea Refraction", 0));
+        seaShadowBox->setText(QApplication::translate("MainWindow", "Sea Shadow", 0));
+        rainBox->setText(QApplication::translate("MainWindow", "Rain", 0));
+        fogBox->setText(QApplication::translate("MainWindow", "Fog", 0));
+        snowBox->setText(QApplication::translate("MainWindow", "Snow", 0));
+        aaBox->setText(QApplication::translate("MainWindow", "Anti aliasing", 0));
+        ladderBox->setText(QApplication::translate("MainWindow", "Ladder", 0));
+        lightBox->setText(QApplication::translate("MainWindow", "Light", 0));
     } // retranslateUi
 
 };

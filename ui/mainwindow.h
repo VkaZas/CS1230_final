@@ -27,7 +27,15 @@ private:
     Ui::MainWindow *ui;
 
 private slots:
-    void on_checkBox_toggled(bool checked);
+    void on_rainBox_toggled(bool checked);
+    void on_fogBox_toggled(bool checked);
+    void on_snowBox_toggled(bool checked);
+    void on_aaBox_toggled(bool checked);
+    void on_seaReflectionBox_toggled(bool checked);
+    void on_seaRefractionBox_toggled(bool checked);
+    void on_seaShadowBox_toggled(bool checked);
+    void on_ladderBox_toggled(bool checked);
+    void on_lightBox_toggled(bool checked);
 };
 
 #endif // MAINWINDOW_H

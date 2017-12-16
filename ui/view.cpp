@@ -9,7 +9,8 @@
 #include <iostream>
 
 View::View(QWidget *parent) : QGLWidget(ViewFormat(), parent),
-    m_time(), m_timer(), m_captureMouse(false), m_increment(0), m_fps(60.0)
+    m_time(), m_timer(), m_captureMouse(false), m_increment(0), m_fps(60.0), m_rain(0),m_aa(0),m_fog(0),m_snow(0),
+    m_seaReflection(0),m_seaRefraction(0), m_seaShadow(0),m_light(0),m_ladder(0)
 {
     // View needs all mouse move events, not just mouse drag events
     setMouseTracking(true);
@@ -29,6 +30,7 @@ View::View(QWidget *parent) : QGLWidget(ViewFormat(), parent),
 View::~View()
 {
 }
+
 
 void View::initializeGL()
 {
@@ -67,6 +69,44 @@ void View::initializeGL()
 //    glFrontFace(GL_CCW);
 }
 
+
+void View::toggleRain(bool checked) {
+    m_rain = checked? 1.0: 0;
+}
+
+void View::toggleFog(bool checked) {
+    m_fog = checked? 1.0: 0;
+}
+
+void View::toggleSnow(bool checked) {
+    m_snow = checked? 1.0: 0;
+}
+
+void View::toggleAA(bool checked) {
+    m_aa = checked? 1.0: 0;
+}
+
+void View::toggleSeaReflection(bool checked) {
+    m_seaReflection = checked? 1.0: 0;
+}
+
+void View::toggleSeaRefraction(bool checked) {
+    m_seaRefraction = checked? 1.0: 0;
+}
+
+void View::toggleSeaShadow(bool checked) {
+    m_seaShadow = checked? 1.0: 0;
+}
+
+void View::toggleLadder(bool checked) {
+    m_ladder = checked? 1.0: 0;
+}
+
+void View::toggleLight(bool checked) {
+    m_light = checked? 1.0: 0;
+    //std::cout<<m_light<<std::endl;
+}
+
 void View::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -75,7 +115,16 @@ void View::paintGL()
     glUniform1f(glGetUniformLocation(m_helixProgramID, "iTime"), time);
     glUniform3f(glGetUniformLocation(m_helixProgramID, "iResolution"), m_width * 1.0f, m_height * 1.0f, 1.0f);
 
-//    cout << "paintGL" << endl;
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iRain"), m_rain);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iSnow"), m_snow);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iFog"), m_fog);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iAA"), m_aa);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iSeaReflection"), m_seaReflection);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iSeaRefraction"), m_seaRefraction);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iSeaShadow"), m_seaShadow);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iLadder"), m_ladder);
+    glUniform1f(glGetUniformLocation(m_helixProgramID, "iLight"), m_light);
+
     // TODO: Implement the demo rendering here
     m_screenSquad->draw();
 }

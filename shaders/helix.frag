@@ -20,6 +20,17 @@
 
 uniform vec3 iResolution;
 uniform float iTime;
+
+uniform float iRain;
+uniform float iFog;
+uniform float iSnow;
+uniform float iAA;
+uniform float iLight;
+uniform float iSeaReflection;
+uniform float iSeaRefraction;
+uniform float iSeaStorm;
+uniform float iSeaShadow;
+uniform float iLadder;
 uniform sampler2D iChannel3;
 out vec4 fragColor;
 
@@ -92,14 +103,14 @@ float fbmTerrain(vec2 p, int level) {
 
 float fbmLight( vec3 p )
 {
-        vec3 q = p + vec3(sin(iTime),-1.*iTime,cos(iTime));
-        float f;
+    vec3 q = p + vec3(sin(iTime),-1.*iTime,cos(iTime));
+    float f;
     f  = 0.50000*(1.+valueNoise( q )); q = q*2.02;
     f += 0.25000*(1.+valueNoise( q )); q = q*2.03;
     f += 0.12500*(1.+valueNoise( q )); q = q*2.01;
     f += 0.06250*(1.+valueNoise( q )); q = q*2.02;
     f += 0.03125*(1.+valueNoise( q ));
-        return clamp(f, 0.0, 1.0 );
+    return clamp(f, 0.0, 1.0 );
 }
 
 float fbmCloud(vec3 p, int level) {
@@ -153,11 +164,11 @@ float mapSealevel(vec3 p, int level) {
     return p.y - SEALEVEL_HEIGHT - fbmSealevel(vec3(p.xz * .1, iTime * .5) * 5., level);
 }
 
-const float theta = 3.14 * 2. / 15.;
+const float theta = 3.14 * 2. / 16.;
 const mat2 rotate2D = mat2(cos(theta), sin(theta), -sin(theta), cos(theta));
 
 float mapHelix(vec3 p) {
-    p.y = mod(p.y, 25.);
+    p.y = mod(p.y, 23.2);
     vec3 offset = vec3(10., 3., 0.);
     float dh = 1.2;
     vec3 dimen = vec3(2.5, .1, 1.);
@@ -165,7 +176,7 @@ float mapHelix(vec3 p) {
     for (int i=0; i<16; i++) {
         res = min(res, udBox(p - offset, dimen)); p.xz = rotate2D * p.xz; p.y -= dh;
     }
-        return res;
+    return res + (1. - iLadder) * 10000.;
 }
 
 float mapCloud(vec3 p) {
@@ -174,7 +185,7 @@ float mapCloud(vec3 p) {
 }
 
 float mapLight(vec3 p) {
-    float dist = length(p.xz);
+    float dist = length(p.xz) + (1. - iLight) * 10000.;
     int intersectLight = int(dist < LIGHT_RADIUS);
     return mix(dist - LIGHT_RADIUS,  0., float(intersectLight));
 }
@@ -192,7 +203,7 @@ PrimitiveDist map(vec3 p) {
     dist = mix(sealevelDist, dist, step(dist, sealevelDist));
     which = mix(float(HELIX), which, step(dist, helixDist));
     dist = mix(helixDist, dist, step(dist, helixDist));
-        which = mix(float(LIGHT), which, step(dist, lightDist));
+    which = mix(float(LIGHT), which, step(dist, lightDist));
     dist = mix(lightDist, dist, step(dist, lightDist));
 
     return PrimitiveDist(dist, int(which));
@@ -319,8 +330,8 @@ vec3 generateTerrainColor(vec3 pos, vec3 norm, vec3 lig) {
     vec3 calcaire   = vec3(.624, .412, .118);
     vec3 rocks      = vec3(.412, .388, .422);
     vec3 beach      = vec3( 1.0, .894, .710);
-        vec3 snow1 = vec3 ( .78,.78,.78);
-    vec3 snow2 = vec3 ( .9,.9,.9);
+    vec3 snow1      = vec3 ( .78,.78,.78);
+    vec3 snow2      = vec3 ( .9,.9,.9);
 
     float posNoise = valueNoise(pos.xz) + 1.0 * 0.5;
 
@@ -335,7 +346,7 @@ vec3 generateTerrainColor(vec3 pos, vec3 norm, vec3 lig) {
     col = mix ( col  ,    rocks, smoothstep(0.3 , 10.0, pos.y) );
 
     vec3 snowColor = mix(snow1, snow2, smoothstep(0.0, 10.0, posNoise * 10.0));
-    col = mix(snowColor, col, step(norm.y, .6));
+    col = mix(col, snowColor , (1. - step(norm.y, .6)) * iSnow);
 
     return ambient + diffuse * col;
 }
@@ -351,40 +362,48 @@ vec3 generateHelixColor(vec3 ro, vec3 rd, vec3 norm, vec3 lig) {
 
 vec3 generateSeaColor(vec3 ro, vec3 rd, vec3 norm, vec3 lig) {
     float ndotr = dot(norm, rd);
-    float r0 = .6;
+    float r0 = .8;
     r0 = min(r0 + .3 * max(valueNoise(vec3(ro.xz * 5., iTime * 10.)) - .2, 0.), 1.0);
     float fresnel = r0 + (1. - r0) * pow(1.0 - abs(ndotr), 5.);
-    vec3 col = vec3(.292, .434, .729), reflCol, refrCol;
+    vec3 col = vec3(.292, .434, .729), reflCol, refrCol, refrPos = vec3(0., 1., 0.);
     float darkness = 1.;
+    PrimitiveDist res;
 
     // Reflection
-    vec3 reflD = reflect(rd, normalize(norm + vec3(.0, .3, .0)));
-    PrimitiveDist res = raymarch(ro, reflD, 100., .5);
-    vec3 reflPos = ro + res.dist * reflD;
-    if (res.primitive == TERRAIN) {
-        reflCol = generateTerrainColor(reflPos, calcNormal(reflPos, TERRAIN), lig);
-    } else if (res.primitive == HELIX) {
-        reflCol = generateHelixColor(reflPos, reflD, calcNormal(reflPos, HELIX), lig);
+    if (iSeaReflection > .5) {
+        vec3 reflD = reflect(rd, normalize(norm + vec3(.0, .3, .0)));
+        res = raymarch(ro, reflD, 100., .5);
+        vec3 reflPos = ro + res.dist * reflD;
+        if (res.primitive == TERRAIN) {
+            reflCol = generateTerrainColor(reflPos, calcNormal(reflPos, TERRAIN), lig);
+        } else if (res.primitive == HELIX) {
+            reflCol = generateHelixColor(reflPos, reflD, calcNormal(reflPos, HELIX), lig);
+        }
     }
 
-    // Refraction
-    vec3 refrD = refract(rd, vec3(0., 1., 0.), .8);
-    res = raymarchUnderSea(ro, refrD, 30., .8);
-    vec3 refrPos = ro + res.dist * refrD;
-    if (res.primitive == TERRAIN) {
-        refrCol = generateTerrainColor(refrPos, calcNormal(refrPos, TERRAIN), lig);
-    } else if (res.primitive == HELIX) {
-        refrCol = generateHelixColor(refrPos, refrD, calcNormal(refrPos, HELIX), lig);
+    if (iSeaRefraction > .5) {
+        // Refraction
+        vec3 refrD = refract(rd, vec3(0., 1., 0.), .8);
+        res = raymarchUnderSea(ro, refrD, 30., .8);
+        refrPos = ro + res.dist * refrD;
+        if (res.primitive == TERRAIN) {
+            refrCol = generateTerrainColor(refrPos, calcNormal(refrPos, TERRAIN), lig);
+        } else if (res.primitive == HELIX) {
+            refrCol = generateHelixColor(refrPos, refrD, calcNormal(refrPos, HELIX), lig);
+        }
     }
 
-    col = mix(col, fresnel * reflCol + (1. - fresnel) * refrCol, .8);
+
+    col = mix(col, (fresnel + (1 - fresnel) * (1. - iSeaRefraction)) * reflCol + (1. - fresnel) * refrCol, .8);
 
     // Shadow
-    res = raymarch(ro + vec3(0, .15, 0.), lig, 60., .5);
-    vec3 shadPos = ro + res.dist * lig;
+    if (iSeaShadow > .5) {
+        res = raymarch(ro + vec3(0, .15, 0.), lig, 60., .5);
+        vec3 shadPos = ro + res.dist * lig;
 
-    int or = int(res.primitive == HELIX || res.primitive == TERRAIN);
-    darkness -= float(or)*( 1. / (1. + res.dist * .1 +  res.dist * res.dist * .005));
+        int or = int(res.primitive == HELIX || res.primitive == TERRAIN);
+        darkness -= float(or)*( 1. / (1. + res.dist * .1 +  res.dist * res.dist * .005));
+    }
 
     vec3 ambient  = clamp(vec3(0.,0.41,.58)*abs(refrPos.y)*.1, 0., 1.);
     float diffuse  = clamp(dot(norm, lig), 0.0, 1.0);
@@ -421,17 +440,17 @@ vec3 generateCloudColor(vec3 ro, vec3 rd) {
     }
 
     bgc = mix(bgc, sum.rgb, sum.a);
-        return bgc;
+    return bgc;
 }
 
 float buff = 2.5;
 vec3 generateLightColor(vec3 ro, vec3 rd, float t, vec3 lig, vec3 ligColor) {
     vec4 sum = vec4(0.0);
     vec3 pos = vec3(0.0);
-        float dist = 0.0;
+    float dist = 0.0;
 
 
-        for(int i=0; dist <= LIGHT_RADIUS*LIGHT_RADIUS + buff && sum.a <= .99 && i < 300; i++) {
+    for(int i=0; dist <= LIGHT_RADIUS*LIGHT_RADIUS + buff && sum.a <= .99 && i < 300; i++) {
         pos = ro + t*rd;
         dist = pos.x*pos.x + pos.z*pos.z;
 
@@ -450,10 +469,10 @@ vec3 generateLightColor(vec3 ro, vec3 rd, float t, vec3 lig, vec3 ligColor) {
         sum += flag * col*(1.-sum.a);
 
         t += max(0.05,0.15*t);
-        }
+    }
 
     PrimitiveDist passObject = raymarchPassLight(ro, rd, 350., .5);
-        pos = ro + passObject.dist*rd;
+    pos = ro + passObject.dist*rd;
     vec4 lightColor = clamp(sum, 0., 1.);
     int which = passObject.primitive;
 
@@ -461,7 +480,7 @@ vec3 generateLightColor(vec3 ro, vec3 rd, float t, vec3 lig, vec3 ligColor) {
     vec3 nor = calcNormal(pos, which);
 
     // BackgroundColor Placeholder
-        vec3 col = vec3(0.);
+        vec3 col = vec3(0.68,0.68,0.6);
     if (which == TERRAIN) {
         col = generateTerrainColor(pos, nor, lig);
     } else if (which == HELIX) {
@@ -474,7 +493,7 @@ vec3 generateLightColor(vec3 ro, vec3 rd, float t, vec3 lig, vec3 ligColor) {
 
     float fo = .5 - .5 / (1. + passObject.dist * .02 +  passObject.dist * passObject.dist * .0001);
     vec3 fco = vec3(0.68,0.68,0.6);
-    col = mix( col, fco, fo );
+    col = mix(col, fco, fo * iFog);
 
     return col*(1. - lightColor.w) + lightColor.xyz * lightColor.w;
 }
@@ -511,33 +530,9 @@ vec3 postProcess(vec3 col, vec2 uv) {
     // Rain
     vec2 rainUV = (uv * vec2(5., .3) + vec2(.8 * iTime - (uv.x + uv.y) * 1., .8 * iTime)) * 30. ;
     float rain = max(valueNoise(rainUV), 0.) * .5;
-    col = mix(col, vec3(rain), .1);
+    col = mix(col, vec3(rain), .1 * iRain);
     return col;
 }
-
-//void getRay(out vec3 ro, out vec3 rd, out vec2 uv) {
-//    ro = vec3(6.0 * sin(iTime * .3), 10.0, 6.0 * cos(iTime * .3));
-
-//    float focalLength = 2.0;
-
-//    // The target we are looking at
-//    vec3 target = vec3(0.0, 8.0, 0.0);
-//    // Look vector
-//    vec3 look = normalize(ro - target);
-//    // Up vector
-//    vec3 up = vec3(0.0, 1.0, 0.0);
-
-//    // Set up camera matrix
-//    vec3 cameraForward = -look;
-//    vec3 cameraRight = normalize(cross(cameraForward, up));
-//    vec3 cameraUp = normalize(cross(cameraRight, cameraForward));
-
-//    // Construct the ray direction vector
-//    uv = gl_FragCoord.xy / iResolution.xy;
-//    uv = uv * 2.0 - 1.0;
-//    uv.x = uv.x * iResolution.x / iResolution.y;
-//    rd = normalize(uv.x * cameraRight + uv.y * cameraUp + focalLength * cameraForward);
-//}
 
 void main() {
     float height = mix((iTime-30.) * 2. + 10., 10. , step(iTime, 30.));
@@ -566,7 +561,7 @@ void main() {
     vec3 col = vec3(0.68,0.68,0.6);
 
     // AA
-    if (AA == 1) {
+    if (iAA > .5) {
         vec2 uvSize = 2. / iResolution.yx;
 
         for (int dx = -1; dx <= 1; dx += 2) {
@@ -584,12 +579,12 @@ void main() {
                 int isLight = int(rayMarchResult.primitive == LIGHT);
                 float fo = .5 - .5 / (1. + rayMarchResult.dist * .02 +  rayMarchResult.dist * rayMarchResult.dist * .0001);
                 vec3 fco = vec3(0.68,0.68,0.6);
-                tcol = mix(mix( tcol, fco, fo ), tcol, float(isLight));
+                tcol = mix(mix(tcol, fco, fo * iFog), tcol, float(isLight));
                 tcol = postProcess(tcol, uv);
                 col += tcol;
             }
         }
-        col *= .25;
+        col *= .25 * .85;
 
     } else if (AA == 0) {
         vec3 rayDirection = vec3(uv, focalLength);
@@ -606,9 +601,10 @@ void main() {
         int isLight = int(rayMarchResult.primitive == LIGHT);
         float fo = .5 - .5 / (1. + rayMarchResult.dist * .02 +  rayMarchResult.dist * rayMarchResult.dist * .0001);
         vec3 fco = vec3(0.68,0.68,0.6);
-        col = mix(mix( col, fco, fo ), col, float(isLight));
+        col = mix(mix(col, fco, fo * iFog), col, float(isLight));
 
     }
 
     fragColor = vec4(col, 1.0);
+
 }

@@ -19,6 +19,16 @@ public:
     View(QWidget *parent);
     ~View();
 
+    void toggleRain(bool checked);
+    void toggleFog(bool checked);
+    void toggleSnow(bool checked);
+    void toggleAA(bool checked);
+    void toggleSeaReflection(bool checked);
+    void toggleSeaRefraction(bool checked);
+    void toggleSeaShadow(bool checked);
+    void toggleLadder(bool checked);
+    void toggleLight(bool checked);
+
 private:
     QTime m_time;
     QTimer m_timer;
@@ -29,6 +39,16 @@ private:
 
     int m_width, m_height, m_increment;
     float m_fps;
+
+    float m_rain;//0:no 1:yes
+    float m_fog;//0:no 1:yes
+    float m_snow;//0:no 1:yes
+    float m_aa;//0:no 1:yes
+    float m_seaReflection;//0:no 1:yes
+    float m_seaRefraction;
+    float m_seaShadow;//0:no 1:yes
+    float m_ladder;//0:no 1:yes
+    float m_light;//0:no 1:yes
 
     void initializeGL();
     void paintGL();

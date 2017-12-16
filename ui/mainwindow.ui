@@ -37,6 +37,12 @@
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="settingsDockContent">
+    <property name="baseSize">
+     <size>
+      <width>50</width>
+      <height>0</height>
+     </size>
+    </property>
     <widget class="QLabel" name="label">
      <property name="geometry">
       <rect>
@@ -67,37 +73,72 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QCheckBox" name="checkBox">
+       <widget class="QCheckBox" name="seaReflectionBox">
         <property name="text">
-         <string>CheckBox0</string>
+         <string>Sea Reflection</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_2">
+       <widget class="QCheckBox" name="seaRefractionBox">
         <property name="text">
-         <string>CheckBox1</string>
+         <string>Sea Refraction</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_3">
+       <widget class="QCheckBox" name="seaShadowBox">
         <property name="text">
-         <string>CheckBox2</string>
+         <string>Sea Shadow</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_4">
+       <widget class="QCheckBox" name="seaStormBox">
         <property name="text">
-         <string>CheckBox3</string>
+         <string>Sea Storm</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_5">
+       <widget class="QCheckBox" name="rainBox">
         <property name="text">
-         <string>CheckBox4</string>
+         <string>Rain</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="fogBox">
+        <property name="text">
+         <string>Fog</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="snowBox">
+        <property name="text">
+         <string>Snow</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="aaBox">
+        <property name="text">
+         <string>Anti aliasing</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ladderBox">
+        <property name="text">
+         <string>Ladder</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="lightBox">
+        <property name="text">
+         <string>Light</string>
         </property>
        </widget>
       </item>
