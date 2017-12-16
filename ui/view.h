@@ -25,6 +25,7 @@ public:
     void toggleAA(bool checked);
     void toggleSeaReflection(bool checked);
     void toggleSeaRefraction(bool checked);
+    void toggleSeaStorm(bool checked);
     void toggleSeaShadow(bool checked);
     void toggleLadder(bool checked);
     void toggleLight(bool checked);
@@ -39,6 +40,7 @@ private:
 
     int m_width, m_height, m_increment;
     float m_fps;
+    float m_playbackTime;
 
     float m_rain;//0:no 1:yes
     float m_fog;//0:no 1:yes
@@ -46,6 +48,7 @@ private:
     float m_aa;//0:no 1:yes
     float m_seaReflection;//0:no 1:yes
     float m_seaRefraction;
+    float m_seaStorm;
     float m_seaShadow;//0:no 1:yes
     float m_ladder;//0:no 1:yes
     float m_light;//0:no 1:yes

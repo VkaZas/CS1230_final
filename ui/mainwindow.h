@@ -33,6 +33,7 @@ private slots:
     void on_aaBox_toggled(bool checked);
     void on_seaReflectionBox_toggled(bool checked);
     void on_seaRefractionBox_toggled(bool checked);
+    void on_seaStormBox_toggled(bool checked);
     void on_seaShadowBox_toggled(bool checked);
     void on_ladderBox_toggled(bool checked);
     void on_lightBox_toggled(bool checked);

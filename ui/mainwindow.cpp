@@ -37,6 +37,10 @@ void MainWindow::on_seaRefractionBox_toggled(bool checked) {
     ui->view->toggleSeaRefraction(checked);
 }
 
+void MainWindow::on_seaStormBox_toggled(bool checked) {
+    ui->view->toggleSeaStorm(checked);
+}
+
 void MainWindow::on_seaShadowBox_toggled(bool checked) {
     ui->view->toggleSeaShadow(checked);
 }

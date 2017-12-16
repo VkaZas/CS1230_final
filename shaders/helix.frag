@@ -41,7 +41,7 @@ struct PrimitiveDist {
 };
 
 float hash21(vec2 p) {
-    float h = dot(vec2(p),vec2(127.1,311.7));
+    float h = dot(p,vec2(127.1,311.7));
     return fract(sin(h)*43758.5453123) * 2.0 - 1.0;
 }
 
@@ -134,13 +134,16 @@ float fbmSealevel(vec3 p, int level) {
     float freq = 0.03;
     float sum = 0.0;
 
+    p.z *= iSeaStorm + 1.;
+
     for (int i = 0; i < level; i++) {
         float vNoise = valueNoise(p * freq);
         sum += amp * vNoise;
         freq *= 2.01;
         amp *= -0.49;
     }
-    return sin(sum * 20.);
+    sum = sum * (20. + iSeaStorm * 50.) + .1;
+    return sin(sum) / sum * 5.;
 }
 
 
@@ -168,7 +171,7 @@ const float theta = 3.14 * 2. / 16.;
 const mat2 rotate2D = mat2(cos(theta), sin(theta), -sin(theta), cos(theta));
 
 float mapHelix(vec3 p) {
-    p.y = mod(p.y, 23.2);
+    p.y = mod(p.y, 23.5);
     vec3 offset = vec3(10., 3., 0.);
     float dh = 1.2;
     vec3 dimen = vec3(2.5, .1, 1.);
@@ -177,11 +180,6 @@ float mapHelix(vec3 p) {
         res = min(res, udBox(p - offset, dimen)); p.xz = rotate2D * p.xz; p.y -= dh;
     }
     return res + (1. - iLadder) * 10000.;
-}
-
-float mapCloud(vec3 p) {
-    int and = int(p.y < CLOUD_HEIGHT_MAX) * int(p.y > CLOUD_HEIGHT_MIN);
-        return mix(-1., min(abs(p.y - CLOUD_HEIGHT_MIN), abs(p.y - CLOUD_HEIGHT_MAX)), float(and));
 }
 
 float mapLight(vec3 p) {
@@ -279,7 +277,7 @@ PrimitiveDist raymarchPassLight(vec3 ro, vec3 rd, float maxDist, float marchSpee
     }
 
     float isCloud = float((ro.y < CLOUD_HEIGHT_MIN && rd.y > 0.) || (ro.y > CLOUD_HEIGHT_MAX && rd.y < 0.));
-        float which = mix(float(NO_INTERSECT), float(CLOUD), isCloud);
+    float which = mix(float(NO_INTERSECT), float(CLOUD), isCloud);
     return PrimitiveDist(-1.0, int(which));
 }
 
@@ -320,7 +318,7 @@ PrimitiveDist raymarch(vec3 ro, vec3 rd, float maxDist, float marchSpeed) {
     }
 
     float isCloud = float((ro.y < CLOUD_HEIGHT_MIN && rd.y > 0.) || (ro.y > CLOUD_HEIGHT_MAX && rd.y < 0.));
-        float which = mix(float(NO_INTERSECT), float(CLOUD), isCloud);
+    float which = mix(float(NO_INTERSECT), float(CLOUD), isCloud);
     return PrimitiveDist(-1.0, int(which));
 }
 
@@ -363,7 +361,7 @@ vec3 generateHelixColor(vec3 ro, vec3 rd, vec3 norm, vec3 lig) {
 vec3 generateSeaColor(vec3 ro, vec3 rd, vec3 norm, vec3 lig) {
     float ndotr = dot(norm, rd);
     float r0 = .8;
-    r0 = min(r0 + .3 * max(valueNoise(vec3(ro.xz * 5., iTime * 10.)) - .2, 0.), 1.0);
+    r0 = min(r0 + .3 * max(valueNoise(vec3(ro.xz * 5., iTime * 10.)) - .2, 0.) * iRain, 1.0);
     float fresnel = r0 + (1. - r0) * pow(1.0 - abs(ndotr), 5.);
     vec3 col = vec3(.292, .434, .729), reflCol, refrCol, refrPos = vec3(0., 1., 0.);
     float darkness = 1.;
@@ -429,14 +427,14 @@ vec3 generateCloudColor(vec3 ro, vec3 rd) {
     vec3 cloud1 = vec3(1.0,0.95,0.8);
     vec3 cloud2 = vec3(0.25,0.3,0.35);
 
-    rd.y = sqrt(abs(rd.y)) * sign(rd.y);
+    rd.y = mix(sqrt(abs(rd.y)) * sign(rd.y), exp(-abs(rd.y)) * sign(rd.y), .4);
 
-    while ((sum.a < 1.0) && (ro.y > CLOUD_HEIGHT_MIN) && (ro.y < CLOUD_HEIGHT_MAX)) {
+    while ((sum.a < 1.0) && (ro.y + 2. > CLOUD_HEIGHT_MIN) && (ro.y - 2. < CLOUD_HEIGHT_MAX)) {
         float density = fbmCloud(ro * rd.y, LOD_NORM) * .1;
         vec3 col = mix(cloud1, cloud2, density);
         sum.a += density;
         sum.rgb += col * density * density * 15.;
-        ro = ro + rd * .5;
+        ro = ro + rd * .6;
     }
 
     bgc = mix(bgc, sum.rgb, sum.a);
@@ -542,7 +540,7 @@ void main() {
     float focalLength = 2.0;
 
     // The target we are looking at
-    vec3 target = vec3(0.0, height*.7, 0.0);
+    vec3 target = vec3(0.0, height*.7 + 20. - min((iTime * 20. / 15), 20.), 0.0);
     // Look vector
     vec3 look = normalize(rayOrigin - target);
     // Up vector
@@ -584,7 +582,7 @@ void main() {
                 col += tcol;
             }
         }
-        col *= .25 * .85;
+        col *= .25 * .825;
 
     } else if (AA == 0) {
         vec3 rayDirection = vec3(uv, focalLength);

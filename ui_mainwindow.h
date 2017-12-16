@@ -39,6 +39,7 @@ public:
     QCheckBox *seaReflectionBox;
     QCheckBox *seaRefractionBox;
     QCheckBox *seaShadowBox;
+    QCheckBox *seaStormBox;
     QCheckBox *rainBox;
     QCheckBox *fogBox;
     QCheckBox *snowBox;
@@ -68,6 +69,7 @@ public:
         settingsDock->setObjectName(QStringLiteral("settingsDock"));
         settingsDockContent = new QWidget();
         settingsDockContent->setObjectName(QStringLiteral("settingsDockContent"));
+        settingsDockContent->setBaseSize(QSize(50, 0));
         label = new QLabel(settingsDockContent);
         label->setObjectName(QStringLiteral("label"));
         label->setGeometry(QRect(50, 0, 81, 31));
@@ -97,6 +99,11 @@ public:
         seaShadowBox->setObjectName(QStringLiteral("seaShadowBox"));
 
         verticalLayout->addWidget(seaShadowBox);
+
+        seaStormBox = new QCheckBox(verticalLayoutWidget);
+        seaStormBox->setObjectName(QStringLiteral("seaStormBox"));
+
+        verticalLayout->addWidget(seaStormBox);
 
         rainBox = new QCheckBox(verticalLayoutWidget);
         rainBox->setObjectName(QStringLiteral("rainBox"));
@@ -143,6 +150,7 @@ public:
         seaReflectionBox->setText(QApplication::translate("MainWindow", "Sea Reflection", 0));
         seaRefractionBox->setText(QApplication::translate("MainWindow", "Sea Refraction", 0));
         seaShadowBox->setText(QApplication::translate("MainWindow", "Sea Shadow", 0));
+        seaStormBox->setText(QApplication::translate("MainWindow", "Sea Storm", 0));
         rainBox->setText(QApplication::translate("MainWindow", "Rain", 0));
         fogBox->setText(QApplication::translate("MainWindow", "Fog", 0));
         snowBox->setText(QApplication::translate("MainWindow", "Snow", 0));
