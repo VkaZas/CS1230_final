@@ -170,7 +170,7 @@ public:
         ladderBox->setText(QApplication::translate("MainWindow", "Ladder", 0));
         lightBox->setText(QApplication::translate("MainWindow", "Light", 0));
         aoBox->setText(QApplication::translate("MainWindow", "Ambient Occlusion", 0));
-        displacementBox->setText(QApplication::translate("MainWindow", "Color Displacement", 0));
+        displacementBox->setText(QApplication::translate("MainWindow", "Displacement", 0));
     } // retranslateUi
 
 };
