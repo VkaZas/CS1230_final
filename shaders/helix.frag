@@ -31,30 +31,30 @@ uniform float iSeaRefraction;
 uniform float iSeaStorm;
 uniform float iSeaShadow;
 uniform float iLadder;
+uniform float iAO;
+uniform float iDisplace;
 uniform sampler2D iChannel3;
 out vec4 fragColor;
 
 // Data structure for raymarching results
 struct PrimitiveDist {
     float dist;
-    int primitive; // Can be SPHERE, TERRAIN, or NO_INTERSECT
+    int primitive;
 };
 
+// Hash 2D to 1D
 float hash21(vec2 p) {
     float h = dot(p,vec2(127.1,311.7));
-    return fract(sin(h)*43758.5453123) * 2.0 - 1.0;
+    return fract(sin(h)*43758.5453123) * 2.0 - 1.0;  // Generate a [-1,1] result
 }
 
+// Hash 3D to 1D
 float hash31(vec3 p) {
     float h = dot(p,vec3(127.1,311.7, 555.5));
     return fract(sin(h)*43758.5453123) * 2.0 - 1.0;
 }
 
-//float hash31(vec3 p) {
-//    p = 50.0* p*0.3183099 + vec3(0.71,0.113,0.419);
-//    return -1.0+2.0*fract( p.x*p.z*(p.x+p.z) );
-//}
-
+// 2D value noise
 float valueNoise(vec2 p) {
     vec2 pi = floor(p);
     vec2 pf = fract(p);
@@ -68,6 +68,8 @@ float valueNoise(vec2 p) {
     return mix(mix(va, vb, u.x), mix(vc, vd, u.x), u.y);
 }
 
+
+// 3D value noise
 float valueNoise(vec3 p) {
     vec3 pi = floor(p);
     vec3 pf = fract(p);
@@ -86,9 +88,10 @@ float valueNoise(vec3 p) {
                mix(mix(ve, vf, u.x), mix(vg, vh, u.x), u.y), u.z);
 }
 
+// 2D FBM
 float fbmTerrain(vec2 p, int level) {
     float amp = 0.51;
-    float freq = 0.03;
+    float freq = 0.03;  // Reduce frequency vastly to generate common-looking terrain (instead of moutain of spikes)
     float sum = 0.0;
 
     for (int i = 0; i < level; i++) {
@@ -101,16 +104,23 @@ float fbmTerrain(vec2 p, int level) {
     return sum * 45.0;
 }
 
-float fbmLight( vec3 p )
+// 3D FBMs, z dimension can be either time or z components of a position vector
+float fbmLight(vec3 p)
 {
-    vec3 q = p + vec3(sin(iTime),-1.*iTime,cos(iTime));
-    float f;
-    f  = 0.50000*(1.+valueNoise( q )); q = q*2.02;
-    f += 0.25000*(1.+valueNoise( q )); q = q*2.03;
-    f += 0.12500*(1.+valueNoise( q )); q = q*2.01;
-    f += 0.06250*(1.+valueNoise( q )); q = q*2.02;
-    f += 0.03125*(1.+valueNoise( q ));
-    return clamp(f, 0.0, 1.0 );
+    float amp = 0.51;
+    float freq = 1.;
+    float sum = 0;
+
+    for (int i = 0; i < 5; i++) {
+        // Make the holy light self rotate and elevate with time increases,
+        // you could try change -1.*iTime to -100.*iTime and holy light turns to an angry laser beam
+        vec3 q = p + vec3(sin(iTime), -1.*iTime, cos(iTime));
+        float vNoise = valueNoise(q * freq);
+        sum += amp * (1. + vNoise);
+        freq *= 2.01;
+        amp *= .5;
+    }
+    return clamp(sum, 0., 1.);
 }
 
 float fbmCloud(vec3 p, int level) {
@@ -122,9 +132,10 @@ float fbmCloud(vec3 p, int level) {
         float vNoise = valueNoise(p * freq);
         sum += amp * vNoise;
         freq *= 2.01;
-        amp *= -0.49;
+        amp *= -0.49; // A minus sign produces richer variaty
     }
 
+    // Re-mapping from [-1,1] to [0,1]
     sum = (sum + 1.) * .5;
     return sum;
 }
@@ -134,6 +145,7 @@ float fbmSealevel(vec3 p, int level) {
     float freq = 0.03;
     float sum = 0.0;
 
+    // Amplify waves when storm option is checked
     p.z *= iSeaStorm + 1.;
 
     for (int i = 0; i < level; i++) {
@@ -142,25 +154,28 @@ float fbmSealevel(vec3 p, int level) {
         freq *= 2.01;
         amp *= -0.49;
     }
+
+    // Amplify the result to make waves and turbulance obvious
     sum = sum * (20. + iSeaStorm * 50.) + .1;
+
+    // sin(x)/x function generates waves like effects
     return sin(sum) / sum * 5.;
 }
 
-
-float udBox( vec3 p, vec3 b ) {
+// Unsigned box for ladder steps
+float udBox(vec3 p, vec3 b) {
   return length(max(abs(p)-b,0.0));
 }
 
 float mapTerrain(vec3 p, int level) {
-        float dist = p.x*p.x + p.z*p.z;
+    float dist = p.x*p.x + p.z*p.z;
     float delta = 0.;
     float h = fbmTerrain(p.xz, level);
 
     if (dist > 1600.) delta = - h * 1.0;
     else delta = - h + exp(-dist/500.-1.)*50.;
 
-
-    return p.y -2. + delta;
+    return p.y -3. + delta;
 }
 
 float mapSealevel(vec3 p, int level) {
@@ -171,6 +186,7 @@ const float theta = 3.14 * 2. / 16.;
 const mat2 rotate2D = mat2(cos(theta), sin(theta), -sin(theta), cos(theta));
 
 float mapHelix(vec3 p) {
+    if (iLadder < .5) return 10000.;
     p.y = mod(p.y, 23.5);
     vec3 offset = vec3(10., 3., 0.);
     float dh = 1.2;
@@ -179,7 +195,7 @@ float mapHelix(vec3 p) {
     for (int i=0; i<16; i++) {
         res = min(res, udBox(p - offset, dimen)); p.xz = rotate2D * p.xz; p.y -= dh;
     }
-    return res + (1. - iLadder) * 10000.;
+    return res;
 }
 
 float mapLight(vec3 p) {
@@ -191,7 +207,7 @@ float mapLight(vec3 p) {
 PrimitiveDist map(vec3 p) {
     float terrainDist = mapTerrain(p, LOD_RAY);
     float sealevelDist = mapSealevel(p, LOD_RAY - 1);
-    float helixDist = mapHelix(p);
+    float helixDist = iDisplace < .5 ? mapHelix(p) : mapHelix(p) + valueNoise(p * 4.) * .03 * iDisplace;
     float lightDist = mapLight(p);
 
     float dist = terrainDist;
@@ -256,7 +272,6 @@ vec3 calcNormal(vec3 p, int which) {
         norm.y = map(p + e.yxy).dist - map(p - e.yxy).dist;
         norm.z = map(p + e.yyx).dist - map(p - e.yyx).dist;
     }
-
     return normalize(norm);
 }
 
@@ -272,7 +287,7 @@ PrimitiveDist raymarchPassLight(vec3 ro, vec3 rd, float maxDist, float marchSpee
         PrimitiveDist near = mapPassLight(pos);
         if (near.dist < threshold)
             return PrimitiveDist(marchDist, near.primitive);
-        marchDist += near.dist * marchSpeed;
+        marchDist += near.dist * min((marchSpeed + marchDist * 2. / maxDist), .95);
         if (marchDist > boundingDist) break;
     }
 
@@ -307,13 +322,13 @@ PrimitiveDist raymarch(vec3 ro, vec3 rd, float maxDist, float marchSpeed) {
     float boundingDist = maxDist;
     float threshold = 0.1;
 
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < 400; i++) {
         // Fill in loop body
         vec3 pos = ro + rd * marchDist;
         PrimitiveDist near = map(pos);
         if (near.dist < threshold)
             return PrimitiveDist(marchDist, near.primitive);
-        marchDist += near.dist * marchSpeed;
+        marchDist += near.dist * min((marchSpeed + marchDist * 2. / maxDist), .95);
         if (marchDist > boundingDist) break;
     }
 
@@ -339,9 +354,9 @@ vec3 generateTerrainColor(vec3 pos, vec3 norm, vec3 lig) {
     float diffuse = clamp(dot(norm, lig), 0.0, 1.0);
 
     // base color
-    col = mix ( beach,    earth, smoothstep(0.0 , 0.08, pos.y) );
-    col = mix ( col  , calcaire, smoothstep(0.08,  0.3, pos.y) );
-    col = mix ( col  ,    rocks, smoothstep(0.3 , 10.0, pos.y) );
+    col = mix(beach, earth, smoothstep(0.0, 0.08, pos.y) );
+    col = mix(col, calcaire, smoothstep(0.08, 0.3, pos.y) );
+    col = mix(col, rocks, smoothstep(0.3, 10.0, pos.y) );
 
     vec3 snowColor = mix(snow1, snow2, smoothstep(0.0, 10.0, posNoise * 10.0));
     col = mix(col, snowColor , (1. - step(norm.y, .6)) * iSnow);
@@ -360,7 +375,7 @@ vec3 generateHelixColor(vec3 ro, vec3 rd, vec3 norm, vec3 lig) {
 
 vec3 generateSeaColor(vec3 ro, vec3 rd, vec3 norm, vec3 lig) {
     float ndotr = dot(norm, rd);
-    float r0 = .8;
+    float r0 = .6;
     r0 = min(r0 + .3 * max(valueNoise(vec3(ro.xz * 5., iTime * 10.)) - .2, 0.) * iRain, 1.0);
     float fresnel = r0 + (1. - r0) * pow(1.0 - abs(ndotr), 5.);
     vec3 col = vec3(.292, .434, .729), reflCol, refrCol, refrPos = vec3(0., 1., 0.);
@@ -427,7 +442,7 @@ vec3 generateCloudColor(vec3 ro, vec3 rd) {
     vec3 cloud1 = vec3(1.0,0.95,0.8);
     vec3 cloud2 = vec3(0.25,0.3,0.35);
 
-    rd.y = mix(sqrt(abs(rd.y)) * sign(rd.y), exp(-abs(rd.y)) * sign(rd.y), .4);
+    rd.y = sqrt(abs(rd.y)) * sign(rd.y);
 
     while ((sum.a < 1.0) && (ro.y + 2. > CLOUD_HEIGHT_MIN) && (ro.y - 2. < CLOUD_HEIGHT_MAX)) {
         float density = fbmCloud(ro * rd.y, LOD_NORM) * .1;
@@ -439,6 +454,21 @@ vec3 generateCloudColor(vec3 ro, vec3 rd) {
 
     bgc = mix(bgc, sum.rgb, sum.a);
     return bgc;
+}
+
+vec3 calcAO(vec3 pos, vec3 norm) {
+    vec3 extPos = pos;
+    vec3 ao = vec3(0.);
+    float distIntv = .01;
+    for (int i = 1; i < 10; i++) {
+        extPos = pos + norm * distIntv * i;
+        float res = mapTerrain(extPos, LOD_RAY);
+        if (abs(res - i * distIntv) > .1) {
+            ao += .2 - .2 / 50. * i;
+            break;
+        }
+    }
+    return ao;
 }
 
 float buff = 2.5;
@@ -469,7 +499,7 @@ vec3 generateLightColor(vec3 ro, vec3 rd, float t, vec3 lig, vec3 ligColor) {
         t += max(0.05,0.15*t);
     }
 
-    PrimitiveDist passObject = raymarchPassLight(ro, rd, 350., .5);
+    PrimitiveDist passObject = raymarchPassLight(ro, rd, 1050., .25);
     pos = ro + passObject.dist*rd;
     vec4 lightColor = clamp(sum, 0., 1.);
     int which = passObject.primitive;
@@ -478,9 +508,9 @@ vec3 generateLightColor(vec3 ro, vec3 rd, float t, vec3 lig, vec3 ligColor) {
     vec3 nor = calcNormal(pos, which);
 
     // BackgroundColor Placeholder
-        vec3 col = vec3(0.68,0.68,0.6);
+    vec3 col = vec3(0.68,0.68,0.6);
     if (which == TERRAIN) {
-        col = generateTerrainColor(pos, nor, lig);
+        col = generateTerrainColor(pos, nor, lig) - calcAO(pos, nor) * iAO;
     } else if (which == HELIX) {
         col = generateHelixColor(pos, rd, nor, lig);
     } else if (which == SEALEVEL){
@@ -496,8 +526,9 @@ vec3 generateLightColor(vec3 ro, vec3 rd, float t, vec3 lig, vec3 ligColor) {
     return col*(1. - lightColor.w) + lightColor.xyz * lightColor.w;
 }
 
-vec3 render(vec3 ro, vec3 rd, float t, int which) {
 
+
+vec3 render(vec3 ro, vec3 rd, float t, int which) {
     // Col is the final color of the current pixel.
     vec3 col = vec3(0.68,0.68,0.6);
     vec3 pos = ro + rd * t;
@@ -508,9 +539,12 @@ vec3 render(vec3 ro, vec3 rd, float t, int which) {
     // Normal vector
     vec3 nor = calcNormal(pos, which);
 
+
+
     vec3 material = vec3(0.0);
     if (which == TERRAIN) {
-        col = generateTerrainColor(pos, nor, lig);
+        // Calc Ambient Occlusion
+        col = generateTerrainColor(pos, nor, lig) - calcAO(pos, nor) * iAO;
     } else if (which == HELIX) {
         col = generateHelixColor(pos, rd, nor, lig);
     } else if (which == SEALEVEL){
@@ -540,7 +574,7 @@ void main() {
     float focalLength = 2.0;
 
     // The target we are looking at
-    vec3 target = vec3(0.0, height*.7 + 20. - min((iTime * 20. / 15), 20.), 0.0);
+    vec3 target = vec3(0.0, height*.7, 0.0);
     // Look vector
     vec3 look = normalize(rayOrigin - target);
     // Up vector
@@ -568,7 +602,7 @@ void main() {
                 vec3 rayDirection = vec3(puv, focalLength);
                 rayDirection = normalize(puv.x * cameraRight + puv.y * cameraUp + focalLength * cameraForward);
 
-                PrimitiveDist rayMarchResult = raymarch(rayOrigin, rayDirection, 350., .5);
+                PrimitiveDist rayMarchResult = raymarch(rayOrigin, rayDirection, 1050., .25);
                 int intersect = int(rayMarchResult.primitive != NO_INTERSECT);
                 vec3 tcol = mix(vec3(0.68,0.68,0.6), render(rayOrigin, rayDirection, rayMarchResult.dist, rayMarchResult.primitive), float(intersect));
 
@@ -588,7 +622,7 @@ void main() {
         vec3 rayDirection = vec3(uv, focalLength);
         rayDirection = normalize(uv.x * cameraRight + uv.y * cameraUp + focalLength * cameraForward);
 
-        PrimitiveDist rayMarchResult = raymarch(rayOrigin, rayDirection, 350., .5);
+        PrimitiveDist rayMarchResult = raymarch(rayOrigin, rayDirection, 1050., .2);
         int intersect = int(rayMarchResult.primitive != NO_INTERSECT);
         col = mix(vec3(0.68,0.68,0.6), render(rayOrigin, rayDirection, rayMarchResult.dist, rayMarchResult.primitive), float(intersect));
 

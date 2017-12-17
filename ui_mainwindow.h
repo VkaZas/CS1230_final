@@ -46,6 +46,8 @@ public:
     QCheckBox *aaBox;
     QCheckBox *ladderBox;
     QCheckBox *lightBox;
+    QCheckBox *aoBox;
+    QCheckBox *displacementBox;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -79,7 +81,7 @@ public:
         label->setFont(font);
         verticalLayoutWidget = new QWidget(settingsDockContent);
         verticalLayoutWidget->setObjectName(QStringLiteral("verticalLayoutWidget"));
-        verticalLayoutWidget->setGeometry(QRect(10, 30, 160, 391));
+        verticalLayoutWidget->setGeometry(QRect(10, 30, 160, 451));
         verticalLayout = new QVBoxLayout(verticalLayoutWidget);
         verticalLayout->setSpacing(6);
         verticalLayout->setContentsMargins(11, 11, 11, 11);
@@ -135,6 +137,16 @@ public:
 
         verticalLayout->addWidget(lightBox);
 
+        aoBox = new QCheckBox(verticalLayoutWidget);
+        aoBox->setObjectName(QStringLiteral("aoBox"));
+
+        verticalLayout->addWidget(aoBox);
+
+        displacementBox = new QCheckBox(verticalLayoutWidget);
+        displacementBox->setObjectName(QStringLiteral("displacementBox"));
+
+        verticalLayout->addWidget(displacementBox);
+
         settingsDock->setWidget(settingsDockContent);
         MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(1), settingsDock);
 
@@ -145,7 +157,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "A CS123 Final", 0));
+        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "Sky ladder", 0));
         label->setText(QApplication::translate("MainWindow", "Settings", 0));
         seaReflectionBox->setText(QApplication::translate("MainWindow", "Sea Reflection", 0));
         seaRefractionBox->setText(QApplication::translate("MainWindow", "Sea Refraction", 0));
@@ -157,6 +169,8 @@ public:
         aaBox->setText(QApplication::translate("MainWindow", "Anti aliasing", 0));
         ladderBox->setText(QApplication::translate("MainWindow", "Ladder", 0));
         lightBox->setText(QApplication::translate("MainWindow", "Light", 0));
+        aoBox->setText(QApplication::translate("MainWindow", "Ambient Occlusion", 0));
+        displacementBox->setText(QApplication::translate("MainWindow", "Color Displacement", 0));
     } // retranslateUi
 
 };

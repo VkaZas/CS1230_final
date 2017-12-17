@@ -11,8 +11,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 
+// Callback functions of checkboxes
+
 void MainWindow::on_rainBox_toggled(bool checked) {
-    //std::cout << "haha" << std::endl;
     ui->view->toggleRain(checked);
 }
 
@@ -21,7 +22,6 @@ void MainWindow::on_fogBox_toggled(bool checked){
 }
 
 void MainWindow::on_snowBox_toggled(bool checked) {
-    //std::cout << "haha" << std::endl;
     ui->view->toggleSnow(checked);
 }
 
@@ -51,6 +51,14 @@ void MainWindow::on_ladderBox_toggled(bool checked){
 
 void MainWindow::on_lightBox_toggled(bool checked){
     ui->view->toggleLight(checked);
+}
+
+void MainWindow::on_aoBox_toggled(bool checked) {
+    ui->view->toggleAO(checked);
+}
+
+void MainWindow::on_displacementBox_toggled(bool checked) {
+    ui->view->toggleDisplacement(checked);
 }
 
 MainWindow::~MainWindow()

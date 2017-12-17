@@ -104,5 +104,4 @@ DISTFILES += \
     shaders/normals/normalsArrow.vert \
     shaders/helix.vert \
     shaders/helix.frag \
-    shaders/example_ocean.frag \
     imgs/gray-0-1.png

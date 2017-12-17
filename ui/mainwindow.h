@@ -27,6 +27,7 @@ private:
     Ui::MainWindow *ui;
 
 private slots:
+    // Callback functions of checkboxes
     void on_rainBox_toggled(bool checked);
     void on_fogBox_toggled(bool checked);
     void on_snowBox_toggled(bool checked);
@@ -37,6 +38,8 @@ private slots:
     void on_seaShadowBox_toggled(bool checked);
     void on_ladderBox_toggled(bool checked);
     void on_lightBox_toggled(bool checked);
+    void on_aoBox_toggled(bool checked);
+    void on_displacementBox_toggled(bool checked);
 };
 
 #endif // MAINWINDOW_H

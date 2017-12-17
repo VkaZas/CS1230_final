@@ -29,6 +29,8 @@ public:
     void toggleSeaShadow(bool checked);
     void toggleLadder(bool checked);
     void toggleLight(bool checked);
+    void toggleAO(bool checked);
+    void toggleDisplacement(bool checked);
 
 private:
     QTime m_time;
@@ -41,6 +43,7 @@ private:
     int m_width, m_height, m_increment;
     float m_fps;
     float m_playbackTime;
+    bool m_pause;
 
     float m_rain;//0:no 1:yes
     float m_fog;//0:no 1:yes
@@ -52,6 +55,8 @@ private:
     float m_seaShadow;//0:no 1:yes
     float m_ladder;//0:no 1:yes
     float m_light;//0:no 1:yes
+    float m_ao;
+    float m_dis;
 
     void initializeGL();
     void paintGL();
